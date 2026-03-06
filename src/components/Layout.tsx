@@ -7,6 +7,7 @@ const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/instruments', label: 'Instruments' },
   { to: '/cart', label: 'Cart' },
+  { to: '/admin', label: 'Admin' },
 ];
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {

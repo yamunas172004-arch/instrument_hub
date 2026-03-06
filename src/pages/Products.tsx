@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '@/components/ProductCard';
-import { products } from '@/data/products';
+import { useProducts } from '@/context/ProductContext';
 import { Category } from '@/types/product';
 
 const categories: (Category | 'All')[] = ['All', 'Guitar', 'Piano', 'Drums', 'Violin', 'Keyboard'];
@@ -11,6 +11,7 @@ const Products = () => {
   const initialCat = searchParams.get('category') || 'All';
   const [activeCategory, setActiveCategory] = useState<string>(initialCat);
   const [search, setSearch] = useState('');
+  const { products } = useProducts();
 
   const filtered = useMemo(() => {
     return products.filter(p => {

@@ -1,11 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
-import { products } from '@/data/products';
+import { useProducts } from '@/context/ProductContext';
 import { useCart } from '@/context/CartContext';
 import { ShoppingCart, ArrowLeft, Package } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
+  const { products } = useProducts();
   const product = products.find(p => p.id === id);
 
   if (!product) {

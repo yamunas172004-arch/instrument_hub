@@ -55,7 +55,7 @@ export const products: Product[] = [
     name: 'Stradivarius Violin Replica',
     description: 'Handcrafted violin inspired by the legendary Stradivarius instruments. Rich, projecting tone with exquisite craftsmanship.',
     price: 5800,
-    image: 'https://images.unsplash.com/photo-1612225330812-01a9c73b19a3?w=600&h=600&fit=crop',
+    image: '',
     category: 'Violin',
     stock: 3,
   },

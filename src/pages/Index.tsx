@@ -3,15 +3,7 @@ import { ArrowRight, Guitar, Piano, Drum, Music, Star, Headphones } from 'lucide
 import { useEffect, useRef, useState } from 'react';
 import heroBanner from '@/assets/hero-banner.jpg';
 import ProductCard from '@/components/ProductCard';
-import { products } from '@/data/products';
-
-const featuredProducts = products.filter(p => p.featured);
-
-const categories = [
-  { name: 'Guitars', icon: Guitar, count: products.filter(p => p.category === 'Guitar').length },
-  { name: 'Pianos', icon: Piano, count: products.filter(p => p.category === 'Piano').length },
-  { name: 'Drums', icon: Drum, count: products.filter(p => p.category === 'Drums').length },
-];
+import { useProducts } from '@/context/ProductContext';
 
 const floatingNotes = ['♩', '♪', '♫', '♬', '𝄞', '♩', '♪'];
 
@@ -24,6 +16,15 @@ const stats = [
 const Index = () => {
   const [scrollY, setScrollY] = useState(0);
   const heroRef = useRef<HTMLElement>(null);
+  const { products } = useProducts();
+
+  const featuredProducts = products.filter(p => p.featured);
+
+  const categories = [
+    { name: 'Guitars', icon: Guitar, count: products.filter(p => p.category === 'Guitar').length },
+    { name: 'Pianos', icon: Piano, count: products.filter(p => p.category === 'Piano').length },
+    { name: 'Drums', icon: Drum, count: products.filter(p => p.category === 'Drums').length },
+  ];
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
