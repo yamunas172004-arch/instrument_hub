@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Music, User, Menu, X, LogOut, ShieldCheck, ChevronDown } from 'lucide-react';
+import { ShoppingCart, Music, User, Menu, X, LogOut, ShieldCheck, ChevronDown, History } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,12 +10,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCart } from '@/context/CartContext';
 import { useState } from 'react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const navLinks = [
   { to: '/home', label: 'Home' },
   { to: '/instruments', label: 'Instruments' },
   { to: '/cart', label: 'Cart' },
-  { to: '/admin', label: 'Admin' },
+  { to: '/admin-dashboard', label: 'Admin Panel' },
+  { to: '/user-dashboard', label: 'User Panel' },
 ];
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -33,9 +40,20 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     } catch (e) { }
   }
 
+  // Load login history
+  const historyStr = localStorage.getItem('loginHistory');
+  const allHistory = historyStr ? JSON.parse(historyStr) : [];
+  const displayHistory = userData?.role === 'admin' ? allHistory : allHistory.filter((log: any) => log.email === userData?.email);
+
   // Hide admin link for normal users
   const visibleNavLinks = navLinks.filter(link => {
-    if (link.to === '/admin' && userData?.role !== 'admin') {
+    if (link.to === '/admin-dashboard' && userData?.role !== 'admin') {
+      return false;
+    }
+    if (link.to === '/user-dashboard' && userData?.role !== 'user') {
+      return false;
+    }
+    if ((link.to === '/admin-dashboard' || link.to === '/user-dashboard') && !isLoggedIn) {
       return false;
     }
     return true;
@@ -70,12 +88,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </Link>
             ))}
 
-            {isLoggedIn && userData && (
+            {isLoggedIn && userData && userData.role === 'admin' && (
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors focus:outline-none">
                   Login Details <ChevronDown className="w-4 h-4" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-64 bg-card/95 border-border/50 backdrop-blur-xl mt-2 p-2 shadow-card">
+                <DropdownMenuContent className="w-[360px] bg-card/95 border-border/50 backdrop-blur-xl mt-2 p-2 shadow-card" align="end">
                   <DropdownMenuLabel className="font-normal px-2">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none text-foreground">{userData.username}</p>
@@ -83,20 +101,45 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-border/50" />
-                  <div className="px-3 py-2 text-sm">
-                    <div className="flex items-center justify-between mb-3 text-muted-foreground">
-                      <span>Role:</span>
-                      <span className="font-semibold text-foreground capitalize">{userData.role === 'admin' ? 'Admin' : 'User'}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-muted-foreground">
-                      <span>Status:</span>
-                      <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-500/10 text-green-500">
-                        <ShieldCheck className="w-3.5 h-3.5" /> Active
-                      </span>
+
+                  {/* Small Login History Table inside Dropdown */}
+                  <div className="px-2 py-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Recent Logins</p>
+                    <div className="max-h-[160px] overflow-y-auto pr-1 select-none">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-secondary/30 text-muted-foreground sticky top-0">
+                          <tr>
+                            <th className="py-1 px-2 font-medium">User</th>
+                            <th className="py-1 px-2 font-medium">Role</th>
+                            <th className="py-1 px-2 font-medium">Time</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/30">
+                          {displayHistory.map((log: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-secondary/20 transition-colors">
+                              <td className="py-2 px-2 text-foreground truncate max-w-[100px]" title={log.email}>{log.username}</td>
+                              <td className="py-2 px-2 text-muted-foreground capitalize">{log.role}</td>
+                              <td className="py-2 px-2 text-muted-foreground whitespace-nowrap">{log.loginTime}</td>
+                            </tr>
+                          ))}
+                          {displayHistory.length === 0 && (
+                            <tr>
+                              <td colSpan={3} className="py-2 px-2 text-center text-muted-foreground italic">No recent logins.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
+
                   <DropdownMenuSeparator className="bg-border/50" />
+
                   <DropdownMenuItem asChild className="cursor-pointer focus:bg-primary/10 hover:bg-primary/10 text-foreground transition-colors px-3 py-2 rounded-md">
+                    <Link to="/login-history" className="flex items-center">
+                      <History className="mr-2 h-4 w-4" /> View Full Login History
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer focus:bg-primary/10 hover:bg-primary/10 text-foreground transition-colors px-3 py-2 rounded-md mt-1">
                     <Link to="/profile" className="flex items-center">
                       <User className="mr-2 h-4 w-4" /> View Profile
                     </Link>
@@ -124,17 +167,25 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </span>
               )}
             </Link>
-            <Link
-              to="/cart"
-              className="relative hidden md:block" // Removed old login text logic right of cart, since dropdown rules it now
-            >
-              <ShoppingCart className="h-5 w-5 text-foreground hover:text-primary transition-colors" />
-              {totalItems > 0 && (
-                <span className="absolute -top-2 -right-2 bg-gradient-gold text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {totalItems}
-                </span>
-              )}
-            </Link>
+
+            {isLoggedIn && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem('entryUser');
+                      window.location.href = '/';
+                    }}
+                    className="p-1.5 text-muted-foreground hover:text-destructive transition-colors hidden md:block"
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-card border-border/50 text-foreground">
+                  <p>Logout</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             <button
               className="md:hidden text-foreground"
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -159,8 +210,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </Link>
             ))}
 
-            {/* Mobile Dropdown Replacement equivalent */}
-            {isLoggedIn && userData && (
+            {/* Mobile Dropdown Replacement equivalent - Admin Only */}
+            {isLoggedIn && userData && userData.role === 'admin' && (
               <div className="border-t border-border/50 pt-3 mt-3">
                 <div className="flex items-center gap-2 px-2 pb-2 text-foreground font-medium text-sm">
                   Login Details
@@ -168,13 +219,32 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <div className="px-2 py-2 mb-2 text-sm bg-secondary/50 rounded-lg border border-border/30">
                   <p className="text-foreground font-medium">{userData.username}</p>
                   <p className="text-muted-foreground text-xs">{userData.email}</p>
-                  <div className="flex justify-between mt-3 text-muted-foreground text-xs">
-                    <span>Role: <span className="font-semibold text-foreground capitalize">{userData.role === 'admin' ? 'Admin' : 'User'}</span></span>
-                    <span className="flex items-center gap-1 font-semibold text-green-500">
+                  <div className="flex justify-between mt-3 text-muted-foreground text-xs font-semibold mb-3">
+                    <span>Role: <span className="text-foreground capitalize">{userData.role === 'admin' ? 'Admin' : 'User'}</span></span>
+                    <span className="flex items-center gap-1 text-green-500">
                       <ShieldCheck className="w-3 h-3" /> Active
                     </span>
                   </div>
+                  {/* Recent Mobile Logins */}
+                  <div className="mt-2 border-t border-border/30 pt-2">
+                    <p className="text-[10px] text-muted-foreground uppercase mb-1">Recent Logins (Top 3)</p>
+                    <div className="space-y-1">
+                      {displayHistory.slice(0, 3).map((log: any, idx: number) => (
+                        <div key={idx} className="flex justify-between text-xs items-center bg-background/50 p-1 rounded">
+                          <span className="truncate text-foreground max-w-[80px]" title={log.username}>{log.username}</span>
+                          <span className="text-muted-foreground">{log.loginTime}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
+                <Link
+                  to="/login-history"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full text-left px-2 py-2 flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+                >
+                  <History className="h-4 w-4" /> View Full History
+                </Link>
                 <Link
                   to="/profile"
                   onClick={() => setMobileOpen(false)}

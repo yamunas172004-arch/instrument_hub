@@ -28,7 +28,25 @@ const Entry = () => {
         const role = email.toLowerCase().includes('admin') ? 'admin' : 'user';
 
         // Save user info in localStorage
-        localStorage.setItem('entryUser', JSON.stringify({ username, email, role }));
+        const userInfo = { username, email, role };
+        localStorage.setItem('entryUser', JSON.stringify(userInfo));
+
+        // Save to login history
+        const now = new Date();
+        const loginTime = now.toISOString().replace('T', ' ').substring(0, 16); // e.g., 2026-03-06 18:00
+        const loginRecord = {
+            username,
+            email,
+            role,
+            loginTime,
+            status: "Active"
+        };
+
+        const existingHistoryStr = localStorage.getItem('loginHistory');
+        const loginHistory = existingHistoryStr ? JSON.parse(existingHistoryStr) : [];
+        loginHistory.unshift(loginRecord); // Add to the top
+        localStorage.setItem('loginHistory', JSON.stringify(loginHistory));
+
         toast.success(`Welcome, ${username}!`);
         navigate('/home', { replace: true });
     };

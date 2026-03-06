@@ -5,6 +5,8 @@ import { products as initialProducts } from '@/data/products';
 interface ProductContextType {
   products: Product[];
   addProduct: (product: Omit<Product, 'id'>) => void;
+  updateProduct: (id: string, product: Partial<Product>) => void;
+  deleteProduct: (id: string) => void;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -34,8 +36,16 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setProducts(prev => [newProduct, ...prev]);
   };
 
+  const updateProduct = (id: string, updatedFields: Partial<Product>) => {
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updatedFields } : p));
+  };
+
+  const deleteProduct = (id: string) => {
+    setProducts(prev => prev.filter(p => p.id !== id));
+  };
+
   return (
-    <ProductContext.Provider value={{ products, addProduct }}>
+    <ProductContext.Provider value={{ products, addProduct, updateProduct, deleteProduct }}>
       {children}
     </ProductContext.Provider>
   );
