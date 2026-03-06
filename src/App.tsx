@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/context/CartContext";
 import { ProductProvider } from "@/context/ProductContext";
 import Layout from "@/components/Layout";
+import Entry from "./pages/Entry";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -14,6 +15,7 @@ import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Admin from "./pages/Admin";
+import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,7 +30,8 @@ const App = () => (
           <CartProvider>
             <Layout>
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<Entry />} />
+                <Route path="/home" element={<Index />} />
                 <Route path="/instruments" element={<Products />} />
                 <Route path="/instruments/:id" element={<ProductDetail />} />
                 <Route path="/cart" element={<Cart />} />
@@ -36,6 +39,7 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/profile" element={<UserProfile />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>
