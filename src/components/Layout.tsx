@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Music, User, Menu, X, LogOut, ShieldCheck, ChevronDown, History } from 'lucide-react';
+import { ShoppingCart, Music, User, Menu, X, LogOut, ShieldCheck, ChevronDown, History, Package } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,19 +10,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCart } from '@/context/CartContext';
 import { useState } from 'react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 const navLinks = [
   { to: '/home', label: 'Home' },
   { to: '/instruments', label: 'Instruments' },
-  { to: '/cart', label: 'Cart' },
-  { to: '/admin-dashboard', label: 'Admin Panel' },
-  { to: '/user-dashboard', label: 'User Panel' },
+  { to: '/admin-dashboard', label: 'Dashboard', adminOnly: true },
 ];
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -30,257 +22,356 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Check if user is logged in
+  // Auth state
   const entryUserStr = localStorage.getItem('entryUser');
   const isLoggedIn = !!entryUserStr;
   let userData: any = null;
   if (isLoggedIn) {
-    try {
-      userData = JSON.parse(entryUserStr);
-    } catch (e) { }
+    try { userData = JSON.parse(entryUserStr!); } catch { }
   }
+  const isAdmin = userData?.role === 'admin';
 
-  // Load login history
-  const historyStr = localStorage.getItem('loginHistory');
-  const allHistory = historyStr ? JSON.parse(historyStr) : [];
-  const displayHistory = userData?.role === 'admin' ? allHistory : allHistory.filter((log: any) => log.email === userData?.email);
+  const visibleNavLinks = navLinks.filter(link =>
+    !link.adminOnly || (link.adminOnly && isAdmin && isLoggedIn)
+  );
 
-  // Hide admin link for normal users
-  const visibleNavLinks = navLinks.filter(link => {
-    if (link.to === '/admin-dashboard' && userData?.role !== 'admin') {
-      return false;
-    }
-    if (link.to === '/user-dashboard' && userData?.role !== 'user') {
-      return false;
-    }
-    if ((link.to === '/admin-dashboard' || link.to === '/user-dashboard') && !isLoggedIn) {
-      return false;
-    }
-    return true;
-  });
+  const handleLogout = () => {
+    localStorage.removeItem('entryUser');
+    window.location.href = '/';
+  };
 
-  if (location.pathname === '/') {
+  const noLayoutRoutes = ['/', '/login', '/signup'];
+  if (noLayoutRoutes.includes(location.pathname)) {
     return <main className="min-h-screen flex flex-col">{children}</main>;
   }
 
+  // User initials fallback
+  const initials = userData?.name
+    ? userData.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'U';
+
   return (
     <div className="min-h-screen bg-gradient-dark flex flex-col">
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <Link to="/home" className="flex items-center gap-2">
-            <Music className="h-7 w-7 text-primary" />
-            <span className="text-xl font-bold font-[family-name:var(--font-display)] text-gradient-gold">
-              MelodyMart
-            </span>
-          </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8">
-            {visibleNavLinks.map(link => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === link.to ? 'text-primary' : 'text-muted-foreground'
-                  }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+      {/* ── Navbar ── */}
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/75 backdrop-blur-2xl">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center h-16 gap-8">
 
-            {isLoggedIn && userData && userData.role === 'admin' && (
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors focus:outline-none">
-                  Login Details <ChevronDown className="w-4 h-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-[360px] bg-card/95 border-border/50 backdrop-blur-xl mt-2 p-2 shadow-card" align="end">
-                  <DropdownMenuLabel className="font-normal px-2">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none text-foreground">{userData.username}</p>
-                      <p className="text-xs leading-none text-muted-foreground mt-1">{userData.email}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-border/50" />
-
-                  {/* Small Login History Table inside Dropdown */}
-                  <div className="px-2 py-2">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Recent Logins</p>
-                    <div className="max-h-[160px] overflow-y-auto pr-1 select-none">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-secondary/30 text-muted-foreground sticky top-0">
-                          <tr>
-                            <th className="py-1 px-2 font-medium">User</th>
-                            <th className="py-1 px-2 font-medium">Role</th>
-                            <th className="py-1 px-2 font-medium">Time</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/30">
-                          {displayHistory.map((log: any, idx: number) => (
-                            <tr key={idx} className="hover:bg-secondary/20 transition-colors">
-                              <td className="py-2 px-2 text-foreground truncate max-w-[100px]" title={log.email}>{log.username}</td>
-                              <td className="py-2 px-2 text-muted-foreground capitalize">{log.role}</td>
-                              <td className="py-2 px-2 text-muted-foreground whitespace-nowrap">{log.loginTime}</td>
-                            </tr>
-                          ))}
-                          {displayHistory.length === 0 && (
-                            <tr>
-                              <td colSpan={3} className="py-2 px-2 text-center text-muted-foreground italic">No recent logins.</td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <DropdownMenuSeparator className="bg-border/50" />
-
-                  <DropdownMenuItem asChild className="cursor-pointer focus:bg-primary/10 hover:bg-primary/10 text-foreground transition-colors px-3 py-2 rounded-md">
-                    <Link to="/login-history" className="flex items-center">
-                      <History className="mr-2 h-4 w-4" /> View Full Login History
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="cursor-pointer focus:bg-primary/10 hover:bg-primary/10 text-foreground transition-colors px-3 py-2 rounded-md mt-1">
-                    <Link to="/profile" className="flex items-center">
-                      <User className="mr-2 h-4 w-4" /> View Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      localStorage.removeItem('entryUser');
-                      window.location.href = '/';
-                    }}
-                    className="cursor-pointer focus:bg-destructive/10 hover:bg-destructive/10 text-destructive focus:text-destructive transition-colors px-3 py-2 rounded-md mt-1"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" /> Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </nav>
-
-          <div className="flex items-center gap-4">
-            <Link to="/cart" className="relative">
-              <ShoppingCart className="h-5 w-5 text-foreground hover:text-primary transition-colors" />
-              {totalItems > 0 && (
-                <span className="absolute -top-2 -right-2 bg-gradient-gold text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {totalItems}
-                </span>
-              )}
+            {/* ── Left: Logo ── */}
+            <Link to="/home" className="flex items-center gap-2.5 shrink-0 group">
+              <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-gold shadow-gold transition-transform group-hover:scale-110">
+                <Music className="h-4.5 w-4.5 text-primary-foreground" />
+                <span className="absolute inset-0 rounded-lg bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <span className="text-lg font-bold font-[family-name:var(--font-display)] text-gradient-gold tracking-wide hidden sm:block">
+                MelodyMart
+              </span>
             </Link>
 
-            {isLoggedIn && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => {
-                      localStorage.removeItem('entryUser');
-                      window.location.href = '/';
-                    }}
-                    className="p-1.5 text-muted-foreground hover:text-destructive transition-colors hidden md:block"
+            {/* ── Center: Nav Links ── */}
+            <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+              {visibleNavLinks.map(link => {
+                const isActive = location.pathname === link.to;
+                return (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                      ${isActive
+                        ? 'text-primary bg-primary/10'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                      }`}
                   >
-                    <LogOut className="h-5 w-5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-card border-border/50 text-foreground">
-                  <p>Logout</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            <button
-              className="md:hidden text-foreground"
-              onClick={() => setMobileOpen(!mobileOpen)}
-            >
-              {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+                    {link.label}
+                    {isActive && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-primary" />
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* ── Right: Cart + Profile ── */}
+            <div className="flex items-center gap-3 ml-auto">
+
+              {/* Cart */}
+              <Link
+                to="/cart"
+                className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all duration-200"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-gradient-gold text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center shadow-gold">
+                    {totalItems}
+                  </span>
+                )}
+              </Link>
+
+              {/* Profile Dropdown OR Login */}
+              {isLoggedIn ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="flex items-center gap-2.5 pl-1 pr-3 py-1 rounded-2xl border border-border/50 bg-secondary/30 hover:bg-secondary/60 hover:border-border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 group"
+                    >
+                      {/* Avatar */}
+                      <div className="relative h-8 w-8 rounded-xl overflow-hidden shrink-0 ring-2 ring-primary/0 group-hover:ring-primary/30 transition-all">
+                        {userData?.profileImage ? (
+                          <img src={userData.profileImage} alt="Avatar" className="h-full w-full object-cover" />
+                        ) : (
+                          <img src="/avatar-placeholder.png" alt="Avatar" className="h-full w-full object-cover" />
+                        )}
+                        {/* Online dot */}
+                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-background" />
+                      </div>
+                      {/* Name */}
+                      <span className="hidden sm:block text-sm font-medium text-foreground max-w-[90px] truncate">
+                        {userData?.name?.split(' ')[0] || 'Account'}
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                    </button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent
+                    className="w-64 p-0 bg-card/95 border-border/50 backdrop-blur-2xl shadow-2xl rounded-2xl overflow-hidden"
+                    align="end"
+                    sideOffset={8}
+                  >
+                    {/* User Header */}
+                    <div className="p-4 bg-gradient-to-b from-primary/5 to-transparent border-b border-border/40">
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-12 w-12 rounded-2xl overflow-hidden shrink-0 shadow-lg">
+                          {userData?.profileImage ? (
+                            <img src={userData.profileImage} alt="Avatar" className="h-full w-full object-cover" />
+                          ) : (
+                            <img src="/avatar-placeholder.png" alt="Avatar" className="h-full w-full object-cover" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {userData?.name || userData?.username || 'User'}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">{userData?.email}</p>
+                          <div className="mt-1.5">
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide
+                              ${isAdmin
+                                ? 'bg-amber-500/15 text-amber-500 border border-amber-500/20'
+                                : 'bg-green-500/15 text-green-500 border border-green-500/20'
+                              }`}
+                            >
+                              {isAdmin ? <ShieldCheck className="h-2.5 w-2.5" /> : <User className="h-2.5 w-2.5" />}
+                              {userData?.role || 'user'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="p-2">
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/profile"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-foreground hover:bg-secondary/60 focus:bg-secondary/60 transition-colors"
+                        >
+                          <div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">My Profile</p>
+                            <p className="text-xs text-muted-foreground">Account settings</p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/cart"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-foreground hover:bg-secondary/60 focus:bg-secondary/60 transition-colors"
+                        >
+                          <div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                            <Package className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">My Orders</p>
+                            <p className="text-xs text-muted-foreground">Track your purchases</p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+
+                      {/* Admin Section */}
+                      {isAdmin && (
+                        <>
+                          <div className="my-2 mx-1 h-px bg-border/50" />
+                          <div className="px-3 py-1">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                              Admin Panel
+                            </p>
+                          </div>
+
+                          <DropdownMenuItem asChild>
+                            <Link
+                              to="/admin/users"
+                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-foreground hover:bg-amber-500/10 focus:bg-amber-500/10 transition-colors"
+                            >
+                              <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                                <ShieldCheck className="h-4 w-4 text-amber-500" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-foreground">User Management</p>
+                                <p className="text-xs text-muted-foreground">Manage roles & access</p>
+                              </div>
+                            </Link>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem asChild>
+                            <Link
+                              to="/login-history"
+                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-foreground hover:bg-secondary/60 focus:bg-secondary/60 transition-colors"
+                            >
+                              <div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                                <History className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-foreground">Login History</p>
+                                <p className="text-xs text-muted-foreground">View recent activity</p>
+                              </div>
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Logout */}
+                    <div className="p-2 border-t border-border/40">
+                      <DropdownMenuItem
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-destructive hover:bg-destructive/10 focus:bg-destructive/10 transition-colors"
+                      >
+                        <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                          <LogOut className="h-4 w-4 text-destructive" />
+                        </div>
+                        <p className="text-sm font-medium">Sign Out</p>
+                      </DropdownMenuItem>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link
+                  to="/login"
+                  className="hidden sm:inline-flex items-center justify-center rounded-xl bg-gradient-gold px-5 py-2 text-sm font-semibold text-primary-foreground shadow-gold transition-all hover:scale-105 active:scale-95"
+                >
+                  Sign In
+                </Link>
+              )}
+
+              {/* Mobile Menu Button */}
+              <button
+                className="md:hidden p-2 rounded-xl text-foreground hover:bg-secondary/60 transition-colors"
+                onClick={() => setMobileOpen(!mobileOpen)}
+                aria-label="Toggle menu"
+              >
+                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Mobile Nav */}
+        {/* ── Mobile Nav ── */}
         {mobileOpen && (
-          <nav className="md:hidden border-t border-border/50 bg-background px-4 py-4 space-y-3">
-            {visibleNavLinks.map(link => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMobileOpen(false)}
-                className={`block text-sm font-medium transition-colors ${location.pathname === link.to ? 'text-primary' : 'text-muted-foreground'
-                  }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+          <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-2xl">
+            <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
+              {visibleNavLinks.map(link => {
+                const isActive = location.pathname === link.to;
+                return (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors
+                      ${isActive ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'}`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </nav>
 
-            {/* Mobile Dropdown Replacement equivalent - Admin Only */}
-            {isLoggedIn && userData && userData.role === 'admin' && (
-              <div className="border-t border-border/50 pt-3 mt-3">
-                <div className="flex items-center gap-2 px-2 pb-2 text-foreground font-medium text-sm">
-                  Login Details
-                </div>
-                <div className="px-2 py-2 mb-2 text-sm bg-secondary/50 rounded-lg border border-border/30">
-                  <p className="text-foreground font-medium">{userData.username}</p>
-                  <p className="text-muted-foreground text-xs">{userData.email}</p>
-                  <div className="flex justify-between mt-3 text-muted-foreground text-xs font-semibold mb-3">
-                    <span>Role: <span className="text-foreground capitalize">{userData.role === 'admin' ? 'Admin' : 'User'}</span></span>
-                    <span className="flex items-center gap-1 text-green-500">
-                      <ShieldCheck className="w-3 h-3" /> Active
+            {/* Mobile User Section */}
+            {isLoggedIn ? (
+              <div className="container mx-auto px-4 pb-4">
+                <div className="rounded-2xl border border-border/40 bg-secondary/20 overflow-hidden">
+                  {/* User Header */}
+                  <div className="flex items-center gap-3 p-4 border-b border-border/30">
+                    <div className="h-11 w-11 rounded-xl overflow-hidden shrink-0">
+                      {userData?.profileImage ? (
+                        <img src={userData.profileImage} alt="Avatar" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-gold flex items-center justify-center text-primary-foreground font-bold">
+                          {initials}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{userData?.name || 'User'}</p>
+                      <p className="text-xs text-muted-foreground truncate">{userData?.email}</p>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase
+                      ${isAdmin ? 'bg-amber-500/15 text-amber-500' : 'bg-green-500/15 text-green-500'}`}>
+                      {userData?.role}
                     </span>
                   </div>
-                  {/* Recent Mobile Logins */}
-                  <div className="mt-2 border-t border-border/30 pt-2">
-                    <p className="text-[10px] text-muted-foreground uppercase mb-1">Recent Logins (Top 3)</p>
-                    <div className="space-y-1">
-                      {displayHistory.slice(0, 3).map((log: any, idx: number) => (
-                        <div key={idx} className="flex justify-between text-xs items-center bg-background/50 p-1 rounded">
-                          <span className="truncate text-foreground max-w-[80px]" title={log.username}>{log.username}</span>
-                          <span className="text-muted-foreground">{log.loginTime}</span>
-                        </div>
-                      ))}
-                    </div>
+
+                  {/* Mobile Menu Items */}
+                  <div className="p-2">
+                    {[
+                      { to: '/profile', icon: User, label: 'My Profile' },
+                      { to: '/cart', icon: Package, label: 'My Orders' },
+                      ...(isAdmin ? [
+                        { to: '/admin/users', icon: ShieldCheck, label: 'User Management' },
+                        { to: '/login-history', icon: History, label: 'Login History' },
+                      ] : []),
+                    ].map(item => (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl text-foreground hover:bg-secondary/60 transition-colors"
+                      >
+                        <item.icon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">{item.label}</span>
+                      </Link>
+                    ))}
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors mt-1"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span className="text-sm font-medium">Sign Out</span>
+                    </button>
                   </div>
                 </div>
+              </div>
+            ) : (
+              <div className="container mx-auto px-4 pb-4">
                 <Link
-                  to="/login-history"
+                  to="/login"
                   onClick={() => setMobileOpen(false)}
-                  className="w-full text-left px-2 py-2 flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+                  className="flex items-center justify-center w-full rounded-xl bg-gradient-gold px-6 py-3 text-sm font-bold text-primary-foreground shadow-gold"
                 >
-                  <History className="h-4 w-4" /> View Full History
+                  Sign In to Your Account
                 </Link>
-                <Link
-                  to="/profile"
-                  onClick={() => setMobileOpen(false)}
-                  className="w-full text-left px-2 py-2 flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
-                >
-                  <User className="h-4 w-4" /> View Profile
-                </Link>
-                <button
-                  onClick={() => {
-                    localStorage.removeItem('entryUser');
-                    window.location.href = '/';
-                  }}
-                  className="w-full text-left px-2 py-2 flex items-center gap-2 text-sm font-medium text-destructive transition-colors"
-                >
-                  <LogOut className="h-4 w-4" /> Logout
-                </button>
               </div>
             )}
-
-            {!isLoggedIn && (
-              <Link
-                to="/"
-                onClick={() => setMobileOpen(false)}
-                className="block text-sm font-medium text-muted-foreground pt-3 border-t border-border/50"
-              >
-                Login / Sign Up
-              </Link>
-            )}
-          </nav>
+          </div>
         )}
       </header>
 
-      {/* Main Content */}
+      {/* ── Main Content ── */}
       <main className="flex-1">{children}</main>
 
-      {/* Footer */}
+      {/* ── Footer ── */}
       <footer className="border-t border-border/50 bg-card/50">
         <div className="container mx-auto px-4 py-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

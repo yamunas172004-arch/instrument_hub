@@ -3,15 +3,18 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Music } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { useAuth } from '@/context/AuthContext';
+
 const Signup = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [form, setForm] = useState({ username: '', email: '', password: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState(false);
 
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.username || !form.email || !form.password || !form.confirmPassword) {
       toast.error('Please fill in all fields');
@@ -25,8 +28,28 @@ const Signup = () => {
       toast.error('Passwords do not match');
       return;
     }
-    toast.success('Account created successfully!');
-    navigate('/login');
+
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: form.username, email: form.email, password: form.password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success('Account created successfully!');
+        login(data);
+        navigate('/home');
+      } else {
+        toast.error(data.message || 'Error occurred during registration');
+      }
+    } catch (error) {
+      toast.error('Network error. Please try again.');
+    }
   };
 
   return (

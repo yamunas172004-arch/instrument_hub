@@ -1,91 +1,162 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Music } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import AnimatedWaves from '@/components/AnimatedWaves';
+import { GoogleLogin } from '@react-oauth/google';
+import { useAuth } from '@/context/AuthContext';
+import { Music } from 'lucide-react';
+
+const floatingNotes = ['♩', '♪', '♫', '♬', '𝄞', '♩', '♪', '♫'];
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
-      return;
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        login(data);
+        toast.success(`Welcome, ${data.name}!`);
+        navigate(data.role === 'admin' ? '/admin-dashboard' : '/home');
+      } else {
+        toast.error(data.message || 'Google login failed');
+      }
+    } catch {
+      toast.error('Network error. Please try again.');
     }
-    toast.success('Login successful!');
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4">
-      {/* 3D Background */}
-      <div className="absolute inset-0 z-0">
-        <AnimatedWaves />
-      </div>
+    <div className="relative min-h-screen w-full overflow-hidden flex items-center justify-center bg-gradient-dark">
 
-      {/* Login Form - Centered */}
-      <div className="relative z-10 w-full max-w-md p-8 rounded-2xl bg-card/80 backdrop-blur-xl border border-border/50 shadow-card">
-        <div className="text-center mb-8">
-          <Music className="h-10 w-10 text-primary mx-auto mb-3" />
-          <h1 className="text-3xl font-bold text-foreground">Welcome Back</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign in to your MelodyMart account</p>
-        </div>
+      {/* ── Ambient glow orbs using site's gold/warm palette ── */}
+      <div
+        className="absolute top-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{ background: 'hsla(38, 90%, 55%, 0.07)', filter: 'blur(100px)', animation: 'pulseGlow 6s ease-in-out infinite' }}
+      />
+      <div
+        className="absolute bottom-[-15%] right-[-10%] w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{ background: 'hsla(30, 70%, 45%, 0.08)', filter: 'blur(100px)', animation: 'pulseGlow 8s ease-in-out infinite', animationDelay: '2s' }}
+      />
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse, hsla(38,90%,55%,0.05) 0%, transparent 70%)', filter: 'blur(60px)' }}
+      />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1.5">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg bg-secondary/80 text-foreground border border-border/50 focus:border-primary focus:outline-none backdrop-blur-sm"
-              placeholder="you@example.com"
-            />
-          </div>
+      {/* ── Fine grid overlay ── */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.03]"
+        style={{
+          backgroundImage: `linear-gradient(hsl(40,20%,90%) 1px, transparent 1px), linear-gradient(90deg, hsl(40,20%,90%) 1px, transparent 1px)`,
+          backgroundSize: '48px 48px',
+        }}
+      />
 
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1.5">Password</label>
+      {/* ── Floating music notes  (same as Index.tsx) ── */}
+      {floatingNotes.map((note, i) => (
+        <span
+          key={i}
+          className="absolute select-none pointer-events-none opacity-0"
+          style={{
+            left: `${5 + i * 12}%`,
+            bottom: `${20 + (i % 4) * 10}%`,
+            color: `hsl(38, 90%, ${50 + i * 3}%)`,
+            animation: `floatNote ${4 + i * 0.7}s ease-in-out ${i * 0.5}s infinite`,
+            fontSize: `${1.1 + (i % 3) * 0.4}rem`,
+            filter: 'drop-shadow(0 0 8px hsla(38,90%,55%,0.5))',
+          }}
+        >
+          {note}
+        </span>
+      ))}
+
+      {/* ── Card ── */}
+      <div className="relative z-10 w-full max-w-sm mx-4">
+        {/* Glow ring behind the card */}
+        <div
+          className="absolute -inset-px rounded-2xl pointer-events-none"
+          style={{ background: 'linear-gradient(135deg, hsla(38,90%,55%,0.25), hsla(30,70%,45%,0.1), transparent)', borderRadius: 'inherit', filter: 'blur(1px)' }}
+        />
+
+        <div className="relative rounded-2xl bg-card/80 border border-border/50 backdrop-blur-xl shadow-card p-10 flex flex-col items-center gap-7">
+
+          {/* Logo */}
+          <div className="flex flex-col items-center gap-3">
+            {/* Icon with gold glow */}
             <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg bg-secondary/80 text-foreground border border-border/50 focus:border-primary focus:outline-none pr-10 backdrop-blur-sm"
-                placeholder="••••••••"
+              <div
+                className="absolute inset-0 rounded-xl pointer-events-none"
+                style={{ background: 'hsla(38,90%,55%,0.35)', filter: 'blur(14px)', transform: 'scale(1.3)' }}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+              <div className="relative w-16 h-16 rounded-xl bg-gradient-gold flex items-center justify-center shadow-gold">
+                <Music className="w-8 h-8 text-primary-foreground" />
+              </div>
+            </div>
+
+            {/* Brand name */}
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-gradient-gold font-[family-name:var(--font-display)] tracking-wide">
+                MelodyMart
+              </h1>
+              <p className="text-[11px] text-muted-foreground mt-1 tracking-[0.2em] uppercase">
+                Instrument Hub
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2 text-muted-foreground">
-              <input type="checkbox" className="rounded border-border accent-primary" />
-              Remember me
-            </label>
-            <a href="#" className="text-primary hover:underline">Forgot password?</a>
+          {/* Divider */}
+          <div
+            className="w-full h-px"
+            style={{ background: 'linear-gradient(to right, transparent, hsl(20,10%,20%), transparent)' }}
+          />
+
+          {/* Sign-in text + Google button */}
+          <div className="flex flex-col items-center gap-4 w-full">
+            <p className="text-sm text-muted-foreground text-center">
+              Sign in to access your store
+            </p>
+
+            <div className="w-full flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast.error('Google Login failed')}
+                width="100%"
+                theme="filled_black"
+                shape="pill"
+                size="large"
+                text="continue_with"
+              />
+            </div>
           </div>
 
-          <button
-            type="submit"
-            className="w-full px-6 py-3 rounded-lg bg-gradient-gold text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
-          >
-            Sign In
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          Don't have an account?{' '}
-          <Link to="/signup" className="text-primary hover:underline font-medium">Sign Up</Link>
-        </p>
+          {/* Footer */}
+          <p className="text-[10px] text-muted-foreground/50 text-center leading-relaxed">
+            By signing in you agree to our{' '}
+            <span className="text-primary/60 hover:text-primary cursor-pointer transition-colors">Terms</span>
+            {' '}&amp;{' '}
+            <span className="text-primary/60 hover:text-primary cursor-pointer transition-colors">Privacy Policy</span>.
+          </p>
+        </div>
       </div>
+
+      {/* Keyframes */}
+      <style>{`
+        @keyframes floatNote {
+          0%   { opacity: 0; transform: translateY(0px) rotate(-5deg); }
+          15%  { opacity: 0.55; }
+          50%  { opacity: 0.3;  transform: translateY(-60px) rotate(8deg); }
+          85%  { opacity: 0.55; }
+          100% { opacity: 0;   transform: translateY(-120px) rotate(-5deg); }
+        }
+        @keyframes pulseGlow {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50%       { opacity: 0.6; transform: scale(1.1); }
+        }
+      `}</style>
     </div>
   );
 };

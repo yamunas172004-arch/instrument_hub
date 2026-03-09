@@ -1,47 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Shield, UserX, UserCheck, MoreVertical, Search, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
 
 interface UserAccount {
-    id: string;
+    _id: string;
     name: string;
     email: string;
     role: 'admin' | 'user';
-    status: 'Active' | 'Banned';
-    joinDate: string;
+    status?: 'Active' | 'Banned';
+    profileImage?: string;
+    createdAt: string;
 }
 
-const initialUsers: UserAccount[] = [
-    { id: '1', name: 'Admin User', email: 'admin@test.com', role: 'admin', status: 'Active', joinDate: '2026-01-01' },
-    { id: '2', name: 'General User', email: 'user@test.com', role: 'user', status: 'Active', joinDate: '2026-02-15' },
-    { id: '3', name: 'Rahul Khanna', email: 'rahul@example.com', role: 'user', status: 'Active', joinDate: '2026-03-10' },
-    { id: '4', name: 'Sneha Rao', email: 'sneha@example.com', role: 'user', status: 'Banned', joinDate: '2026-03-12' },
-];
-
 const UserManagement = () => {
-    const [users, setUsers] = useState<UserAccount[]>(initialUsers);
+    const { user, updateRole } = useAuth();
+    const [users, setUsers] = useState<UserAccount[]>([]);
     const [search, setSearch] = useState('');
+    const [loading, setLoading] = useState(true);
 
-    const toggleStatus = (id: string) => {
-        setUsers(prev => prev.map(u => {
-            if (u.id === id) {
-                const newStatus = u.status === 'Active' ? 'Banned' : 'Active';
-                toast.info(`User identity ${newStatus}`);
-                return { ...u, status: newStatus as 'Active' | 'Banned' };
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/users', {
+                    headers: {
+                        'Authorization': `Bearer ${user?.token}`,
+                    },
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    setUsers(data.map((u: any) => ({ ...u, status: 'Active' })));
+                } else {
+                    toast.error(data.message || 'Failed to fetch users');
+                }
+            } catch (error) {
+                toast.error('Network error while fetching users');
+            } finally {
+                setLoading(false);
             }
-            return u;
-        }));
-    };
+        };
 
-    const changeRole = (id: string, role: 'admin' | 'user') => {
-        setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u));
-        toast.success(`Role changed to ${role}`);
+        if (user?.token) {
+            fetchUsers();
+        }
+    }, [user]);
+
+    const changeRole = async (email: string, role: 'admin' | 'user') => {
+        const success = await updateRole(email, role);
+        if (success) {
+            setUsers(prev => prev.map(u => u.email === email ? { ...u, role } : u));
+            toast.success(`Role changed to ${role} for ${email}`);
+        } else {
+            toast.error('Failed to change role');
+        }
     };
 
     const filteredUsers = users.filter(u =>
         u.name.toLowerCase().includes(search.toLowerCase()) ||
         u.email.toLowerCase().includes(search.toLowerCase())
     );
+
+    if (loading) return <div className="p-8 text-muted-foreground text-center">Loading users...</div>;
 
     return (
         <div className="space-y-6">
@@ -51,7 +70,7 @@ const UserManagement = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                         type="text"
-                        placeholder="Search users..."
+                        placeholder="Search users by name/email..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         className="w-full bg-secondary/50 border border-border/50 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-primary"
@@ -65,64 +84,61 @@ const UserManagement = () => {
                         <thead>
                             <tr className="bg-secondary/30 text-muted-foreground text-xs font-semibold uppercase tracking-wider">
                                 <th className="px-6 py-4">Full Name</th>
-                                <th className="px-6 py-4">Email</th>
-                                <th className="px-6 py-4">Role</th>
+                                <th className="px-6 py-4">Email / Login ID</th>
+                                <th className="px-6 py-4">Role Permission</th>
                                 <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Joined</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
+                                <th className="px-6 py-4">Joined Date</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/30">
-                            {filteredUsers.map(user => (
-                                <tr key={user.id} className="hover:bg-secondary/10 transition-colors">
+                            {filteredUsers.map(u => (
+                                <tr key={u._id} className="hover:bg-secondary/10 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                                <User className="w-4 h-4 text-primary" />
-                                            </div>
-                                            <span className="font-medium text-foreground">{user.name}</span>
+                                            {u.profileImage ? (
+                                                <img src={u.profileImage} alt={u.name} className="w-8 h-8 rounded-full object-cover shadow-sm bg-secondary" />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                                    <User className="w-4 h-4 text-primary" />
+                                                </div>
+                                            )}
+                                            <span className="font-medium text-foreground">{u.name}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-muted-foreground text-sm">
                                         <div className="flex items-center gap-2">
                                             <Mail className="w-3.5 h-3.5" />
-                                            {user.email}
+                                            {u.email}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <select
-                                            value={user.role}
-                                            onChange={e => changeRole(user.id, e.target.value as 'admin' | 'user')}
-                                            className="bg-secondary/50 border border-border/50 rounded-lg p-1 text-xs font-semibold focus:outline-none focus:border-primary"
+                                            value={u.role}
+                                            onChange={e => changeRole(u.email, e.target.value as 'admin' | 'user')}
+                                            disabled={u.email === user?.email}
+                                            className="bg-secondary/50 border border-border/50 rounded-lg p-1 text-xs font-semibold focus:outline-none focus:border-primary disabled:opacity-50"
                                         >
                                             <option value="user">USER</option>
                                             <option value="admin">ADMIN</option>
                                         </select>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight
-                      ${user.status === 'Active' ? 'bg-green-500/10 text-green-500' : 'bg-destructive/10 text-destructive'}
-                    `}>
-                                            {user.status}
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight bg-green-500/10 text-green-500">
+                                            {u.status || 'Active'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-muted-foreground text-sm">{user.joinDate}</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button
-                                            onClick={() => toggleStatus(user.id)}
-                                            className={`p-2 rounded-lg transition-colors
-                        ${user.status === 'Active'
-                                                    ? 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'
-                                                    : 'text-muted-foreground hover:text-green-500 hover:bg-green-500/10'
-                                                }
-                      `}
-                                            title={user.status === 'Active' ? 'Ban User' : 'Unban User'}
-                                        >
-                                            {user.status === 'Active' ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                                        </button>
+                                    <td className="px-6 py-4 text-muted-foreground text-sm">
+                                        {new Date(u.createdAt).toLocaleDateString()}
                                     </td>
                                 </tr>
                             ))}
+                            {filteredUsers.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                                        No users found matching your search.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
