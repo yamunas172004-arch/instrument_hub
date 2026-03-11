@@ -85,13 +85,7 @@ const UserManagement = () => {
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full overflow-hidden border border-border/50">
-                        {u.profileImage ? (
-                          <img src={u.profileImage} alt={u.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="h-full w-full bg-secondary flex items-center justify-center text-muted-foreground text-xs">
-                            {u.name.charAt(0)}
-                          </div>
-                        )}
+                        <img src="/avatar-placeholder.png" alt={u.name} className="h-full w-full object-cover" />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-foreground">{u.name}</p>

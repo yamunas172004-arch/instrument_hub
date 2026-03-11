@@ -45,10 +45,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return <main className="min-h-screen flex flex-col">{children}</main>;
   }
 
-  // User initials fallback
-  const initials = userData?.name
-    ? userData.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
-    : 'U';
 
   return (
     <div className="min-h-screen bg-gradient-dark flex flex-col">
@@ -117,11 +113,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     >
                       {/* Avatar */}
                       <div className="relative h-8 w-8 rounded-xl overflow-hidden shrink-0 ring-2 ring-primary/0 group-hover:ring-primary/30 transition-all">
-                        {userData?.profileImage ? (
-                          <img src={userData.profileImage} alt="Avatar" className="h-full w-full object-cover" />
-                        ) : (
-                          <img src="/avatar-placeholder.png" alt="Avatar" className="h-full w-full object-cover" />
-                        )}
+                        <img src="/avatar-placeholder.png" alt="Avatar" className="h-full w-full object-cover" />
                         {/* Online dot */}
                         <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-background" />
                       </div>
@@ -142,11 +134,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <div className="p-4 bg-gradient-to-b from-primary/5 to-transparent border-b border-border/40">
                       <div className="flex items-center gap-3">
                         <div className="relative h-12 w-12 rounded-2xl overflow-hidden shrink-0 shadow-lg">
-                          {userData?.profileImage ? (
-                            <img src={userData.profileImage} alt="Avatar" className="h-full w-full object-cover" />
-                          ) : (
-                            <img src="/avatar-placeholder.png" alt="Avatar" className="h-full w-full object-cover" />
-                          )}
+                          <img src="/avatar-placeholder.png" alt="Avatar" className="h-full w-full object-cover" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-foreground truncate">
@@ -305,13 +293,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   {/* User Header */}
                   <div className="flex items-center gap-3 p-4 border-b border-border/30">
                     <div className="h-11 w-11 rounded-xl overflow-hidden shrink-0">
-                      {userData?.profileImage ? (
-                        <img src={userData.profileImage} alt="Avatar" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="h-full w-full bg-gradient-gold flex items-center justify-center text-primary-foreground font-bold">
-                          {initials}
-                        </div>
-                      )}
+                      <img src="/avatar-placeholder.png" alt="Avatar" className="h-full w-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{userData?.name || 'User'}</p>

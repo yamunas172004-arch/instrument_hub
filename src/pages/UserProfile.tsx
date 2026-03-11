@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 interface UserData {
     username: string;
     email: string;
+    profileImage?: string;
 }
 
 const UserProfile = () => {
@@ -42,8 +43,8 @@ const UserProfile = () => {
             <div className="w-full max-w-md p-8 rounded-2xl bg-card/80 backdrop-blur-xl border border-border/50 shadow-card flex flex-col items-center">
 
                 {/* User Avatar Representation */}
-                <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center mb-6 shadow-md border border-border/50">
-                    <User className="w-12 h-12 text-primary" />
+                <div className="w-24 h-24 rounded-full overflow-hidden mb-6 shadow-md border border-border/50">
+                    <img src="/avatar-placeholder.png" alt="Avatar" className="h-full w-full object-cover" />
                 </div>
 
                 <h1 className="text-2xl font-bold text-foreground mb-1">{userData.username}</h1>

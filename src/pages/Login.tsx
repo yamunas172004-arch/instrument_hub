@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '@/context/AuthContext';
 import { Music } from 'lucide-react';
+import { GoogleLogin } from "@react-oauth/google";
 
 const floatingNotes = ['♩', '♪', '♫', '♬', '𝄞', '♩', '♪', '♫'];
 

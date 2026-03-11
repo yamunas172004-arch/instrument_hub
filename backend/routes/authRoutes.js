@@ -150,27 +150,5 @@ router.post('/google', async (req, res) => {
   }
 });
 
-// @route   GET /api/auth/make-admin-now
-// @desc    Temporary route to promote a user to admin by email (bypass auth)
-router.get('/make-admin-now', async (req, res) => {
-  try {
-    const { email } = req.query;
-    if (!email) {
-      return res.status(400).json({ message: 'Email query param required' });
-    }
-    const user = await User.findOneAndUpdate(
-      { email: email },
-      { role: 'admin' },
-      { new: true }
-    );
-    if (!user) {
-      return res.status(404).json({ message: `User with email ${email} not found` });
-    }
-    console.log(`ADMIN PROMOTION (temporary route): ${email} now has role ${user.role}`);
-    res.json({ message: `User ${email} promoted successfully`, user });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
 module.exports = router;
