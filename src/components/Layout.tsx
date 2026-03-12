@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Music, User, Menu, X, LogOut, ShieldCheck, ChevronDown, History, Package } from 'lucide-react';
+import { ShoppingCart, Music, User, Menu, X, LogOut, ShieldCheck, ChevronDown, History, Package, Plus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +14,7 @@ import { useState } from 'react';
 const navLinks = [
   { to: '/home', label: 'Home' },
   { to: '/instruments', label: 'Instruments' },
-  { to: '/admin-dashboard', label: 'Dashboard', adminOnly: true },
+  { to: '/admin-dashboard', label: 'Dashboard' },
 ];
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -188,46 +188,61 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         </Link>
                       </DropdownMenuItem>
 
-                      {/* Admin Section */}
-                      {isAdmin && (
-                        <>
-                          <div className="my-2 mx-1 h-px bg-border/50" />
-                          <div className="px-3 py-1">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
-                              Admin Panel
-                            </p>
+                      {/* Management Section */}
+                      <div className="my-2 mx-1 h-px bg-border/50" />
+                      <div className="px-3 py-1">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                          Management
+                        </p>
+                      </div>
+
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/admin-dashboard?tab=Instruments"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-foreground hover:bg-primary/10 transition-colors"
+                        >
+                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <Plus className="h-4 w-4 text-primary" />
                           </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">Add Instrument</p>
+                            <p className="text-xs text-muted-foreground">List a new product</p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
 
-                          <DropdownMenuItem asChild>
-                            <Link
-                              to="/admin/users"
-                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-foreground hover:bg-amber-500/10 focus:bg-amber-500/10 transition-colors"
-                            >
-                              <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                                <ShieldCheck className="h-4 w-4 text-amber-500" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-foreground">User Management</p>
-                                <p className="text-xs text-muted-foreground">Manage roles & access</p>
-                              </div>
-                            </Link>
-                          </DropdownMenuItem>
+                      {isAdmin && (
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/admin/users"
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-foreground hover:bg-amber-500/10 focus:bg-amber-500/10 transition-colors"
+                          >
+                            <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                              <ShieldCheck className="h-4 w-4 text-amber-500" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-foreground">User Management</p>
+                              <p className="text-xs text-muted-foreground">Manage roles & access</p>
+                            </div>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
 
-                          <DropdownMenuItem asChild>
-                            <Link
-                              to="/login-history"
-                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-foreground hover:bg-secondary/60 focus:bg-secondary/60 transition-colors"
-                            >
-                              <div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                                <History className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-foreground">Login History</p>
-                                <p className="text-xs text-muted-foreground">View recent activity</p>
-                              </div>
-                            </Link>
-                          </DropdownMenuItem>
-                        </>
+                      {isAdmin && (
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/login-history"
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-foreground hover:bg-secondary/60 focus:bg-secondary/60 transition-colors"
+                          >
+                            <div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                              <History className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-foreground">Login History</p>
+                              <p className="text-xs text-muted-foreground">View recent activity</p>
+                            </div>
+                          </Link>
+                        </DropdownMenuItem>
                       )}
                     </div>
 
@@ -310,6 +325,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {[
                       { to: '/profile', icon: User, label: 'My Profile' },
                       { to: '/cart', icon: Package, label: 'My Orders' },
+                      { to: '/admin-dashboard?tab=Instruments', icon: Plus, label: 'Add Instrument' },
                       ...(isAdmin ? [
                         { to: '/admin/users', icon: ShieldCheck, label: 'User Management' },
                         { to: '/login-history', icon: History, label: 'Login History' },

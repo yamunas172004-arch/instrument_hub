@@ -16,7 +16,9 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const saved = localStorage.getItem('melody_products');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Exclude the specifically deleted items if they're still in cache
+        return parsed.filter((p: Product) => p.id !== '6' && p.id !== '8');
       } catch (e) {
         return initialProducts;
       }

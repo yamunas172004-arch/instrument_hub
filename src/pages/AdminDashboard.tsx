@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { LayoutDashboard, PlusCircle, ShoppingBag, Users, BarChart3, Menu, X, History } from 'lucide-react';
 import ProductManagement from '@/components/admin/ProductManagement';
 import OrderManagement from '@/components/admin/OrderManagement';
@@ -6,17 +7,38 @@ import UserManagement from '@/components/admin/UserManagement';
 import LoginHistory from './LoginHistory';
 
 const AdminDashboard = () => {
-    const [activeTab, setActiveTab] = useState('Overview');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'Overview');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab) {
+            setActiveTab(tab);
+        }
+    }, [searchParams]);
+
+    const handleTabChange = (name: string) => {
+        setActiveTab(name);
+        setSearchParams({ tab: name });
+        if (window.innerWidth < 768) setIsSidebarOpen(false);
+    };
+
+    const entryUserStr = localStorage.getItem('entryUser');
+    let userData: any = null;
+    if (entryUserStr) {
+        try { userData = JSON.parse(entryUserStr); } catch { }
+    }
+    const isAdmin = userData?.role === 'admin';
 
     const menuItems = [
         { name: 'Overview', icon: LayoutDashboard },
         { name: 'Instruments', icon: PlusCircle },
         { name: 'Manage Orders', icon: ShoppingBag },
-        { name: 'Manage Users', icon: Users },
-        { name: 'Login History', icon: History },
-        { name: 'Sales Statistics', icon: BarChart3 },
-    ];
+        { name: 'Manage Users', icon: Users, adminOnly: true },
+        { name: 'Login History', icon: History, adminOnly: true },
+        { name: 'Sales Statistics', icon: BarChart3, adminOnly: true },
+    ].filter(item => !item.adminOnly || isAdmin);
 
     return (
         <div className="min-h-screen bg-gradient-dark flex flex-col md:flex-row relative">
@@ -46,10 +68,7 @@ const AdminDashboard = () => {
                             return (
                                 <button
                                     key={item.name}
-                                    onClick={() => {
-                                        setActiveTab(item.name);
-                                        if (window.innerWidth < 768) setIsSidebarOpen(false);
-                                    }}
+                                    onClick={() => handleTabChange(item.name)}
                                     className={` w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                     ${activeTab === item.name
                                             ? 'bg-primary/20 text-primary'

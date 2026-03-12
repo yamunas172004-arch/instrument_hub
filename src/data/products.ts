@@ -51,15 +51,6 @@ export const products: Product[] = [
     featured: true,
   },
   {
-    id: '6',
-    name: 'Stradivarius Violin Replica',
-    description: 'Handcrafted violin inspired by the legendary Stradivarius instruments. Rich, projecting tone with exquisite craftsmanship.',
-    price: 5800,
-    image: '',
-    category: 'Violin',
-    stock: 3,
-  },
-  {
     id: '7',
     name: 'Taylor 814ce Acoustic',
     description: 'Premium acoustic-electric guitar with rosewood back and sides, Sitka spruce top. Delivers rich, articulate sound.',
@@ -67,15 +58,6 @@ export const products: Product[] = [
     image: 'https://images.unsplash.com/photo-1525201548942-d8732f6617a0?w=600&h=600&fit=crop',
     category: 'Guitar',
     stock: 7,
-  },
-  {
-    id: '8',
-    name: 'Nord Stage 3 88',
-    description: 'The ultimate stage keyboard featuring piano, organ, and synth sections. Seamless sound layering and splitting.',
-    price: 4999,
-    image: 'https://images.unsplash.com/photo-1524578471438-cdd96d374f44?w=600&h=600&fit=crop',
-    category: 'Keyboard',
-    stock: 5,
   },
   {
     id: '9',
