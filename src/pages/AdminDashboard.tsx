@@ -24,27 +24,17 @@ const AdminDashboard = () => {
         if (window.innerWidth < 768) setIsSidebarOpen(false);
     };
 
-    const entryUserStr = localStorage.getItem('entryUser');
-    let userData: any = null;
-    if (entryUserStr) {
-        try { userData = JSON.parse(entryUserStr); } catch { }
-    }
-    const isAdmin = userData?.role === 'admin';
-
     const menuItems = [
         { name: 'Overview', icon: LayoutDashboard },
         { name: 'Instruments', icon: PlusCircle },
         { name: 'Manage Orders', icon: ShoppingBag },
-        { name: 'Manage Users', icon: Users, adminOnly: true },
-        { name: 'Login History', icon: History, adminOnly: true },
-        { name: 'Sales Statistics', icon: BarChart3, adminOnly: true },
-    ].filter(item => !item.adminOnly || isAdmin);
+    ];
 
     return (
         <div className="min-h-screen bg-gradient-dark flex flex-col md:flex-row relative">
             {/* Mobile Sidebar Toggle */}
             <div className="md:hidden p-4 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-[73px] z-40">
-                <h2 className="font-bold text-lg text-foreground">Admin Panel</h2>
+                <h2 className="font-bold text-lg text-foreground">Dashboard Console</h2>
                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-foreground">
                     {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>
@@ -58,7 +48,7 @@ const AdminDashboard = () => {
         bg-card/95 backdrop-blur-xl border-r border-border/50 shadow-card z-30 flex flex-col
       `}>
                 <div className="p-6 hidden md:block border-b border-border/30">
-                    <h2 className="text-xl font-bold font-[family-name:var(--font-display)] text-gradient-gold">Admin Panel</h2>
+                    <h2 className="text-xl font-bold font-[family-name:var(--font-display)] text-gradient-gold">Dashboard Console</h2>
                     <p className="text-xs text-muted-foreground mt-1">Management Console</p>
                 </div>
                 <div className="flex-1 overflow-y-auto py-4">
