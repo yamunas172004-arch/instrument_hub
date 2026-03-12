@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
@@ -9,6 +10,8 @@ const floatingNotes = ['♩', '♪', '♫', '♬', '𝄞', '♩', '♪', '♫'];
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+
+
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
